@@ -1,0 +1,112 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma-client"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Complaint {
+  id            String         @id @default(uuid()) @db.Uuid
+  name          String         @unique
+  description   String?
+  syndromes     Syndrome[]     @relation("ComplaintToSyndrome")
+  consultations Consultation[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  @@map("complaints")
+}
+
+model SymptomCategory {
+  id        String          @id @default(uuid()) @db.Uuid
+  name      String          @unique
+  options   SymptomOption[]
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  @@map("symptom_categories")
+}
+
+model SymptomOption {
+  id            String                @id @default(uuid()) @db.Uuid
+  name          String
+  categoryId    String                @db.Uuid
+  category      SymptomCategory       @relation(fields: [categoryId], references: [id])
+  syndromeRules SyndromeRule[]
+  consultations ConsultationSymptom[]
+  createdAt     DateTime              @default(now())
+  updatedAt     DateTime              @updatedAt
+
+  @@unique([name, categoryId])
+  @@map("symptom_options")
+}
+
+model Syndrome {
+  id               String         @id @default(uuid()) @db.Uuid
+  name             String         @unique
+  therapyPrinciple String
+  acupoints        String
+  complaints       Complaint[]    @relation("ComplaintToSyndrome")
+  rules            SyndromeRule[]
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  @@map("syndromes")
+}
+
+model Contributor {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String
+  title     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("contributors")
+}
+
+model SyndromeRule {
+  id              String        @id @default(uuid()) @db.Uuid
+  syndromeId      String        @db.Uuid
+  syndrome        Syndrome      @relation(fields: [syndromeId], references: [id])
+  symptomOptionId String        @db.Uuid
+  symptomOption   SymptomOption @relation(fields: [symptomOptionId], references: [id])
+  cfWeight        Float // Certainty Factor weight (0 to 1)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@unique([syndromeId, symptomOptionId])
+  @@index([symptomOptionId]) // Index for fast lookup during diagnosis
+  @@map("syndrome_rules")
+}
+
+model Consultation {
+  id               String                @id @default(uuid()) @db.Uuid
+  patientName      String?
+  patientAge       Int
+  patientGender    String
+  complaintId      String                @db.Uuid
+  complaint        Complaint             @relation(fields: [complaintId], references: [id])
+  selectedSymptoms ConsultationSymptom[]
+  diagnosisResult  Json // Store the calculated CFs and diagnosed syndromes
+  createdAt        DateTime              @default(now())
+
+  @@index([complaintId])
+  @@index([createdAt]) // For history and analytics
+  @@map("consultations")
+}
+
+// Explicit join table for Consultation <-> SymptomOption many-to-many
+model ConsultationSymptom {
+  consultationId  String        @db.Uuid
+  symptomOptionId String        @db.Uuid
+  consultation    Consultation  @relation(fields: [consultationId], references: [id])
+  symptomOption   SymptomOption @relation(fields: [symptomOptionId], references: [id])
+
+  @@id([consultationId, symptomOptionId])
+  @@map("consultation_symptoms")
+}

@@ -1,0 +1,131 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f8fafb; /* Softer, calming medicinal off-white */
+  --foreground: #0f172a; /* high contrast deep slate/teal for clarity */
+  --tcm-accent: #10b981; /* emerald-500 - primary medical green */
+  --tcm-emerald: #10b981; /* emerald-500 - cta green/healing green */
+  --tcm-gold: #0369a1; /* sky-700 - professional trust blue */
+  --tcm-ink: #020617; 
+
+  /* Global scale remappings to ensure all components use the new emerald/green theme */
+  /* Map teal scale to emerald/green */
+  --color-teal-50: #ecfdf5;
+  --color-teal-100: #d1fae5;
+  --color-teal-200: #a7f3d0;
+  --color-teal-300: #6ee7b7;
+  --color-teal-400: #34d399;
+  --color-teal-500: #10b981;
+  --color-teal-600: #059669;
+  --color-teal-700: #047857;
+  --color-teal-800: #065f46;
+  --color-teal-900: #064e3b;
+  --color-teal-950: #022c22;
+
+  /* Map cyan scale to emerald/green as well */
+  --color-cyan-50: #ecfdf5;
+  --color-cyan-100: #d1fae5;
+  --color-cyan-200: #a7f3d0;
+  --color-cyan-600: #10b981;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-tcm-accent: var(--tcm-accent);
+  --color-tcm-emerald: var(--tcm-emerald);
+  --color-tcm-gold: var(--tcm-gold);
+  --color-tcm-ink: var(--tcm-ink);
+  
+  --font-heading: var(--font-heading), ui-sans-serif, system-ui, sans-serif;
+  --font-body: var(--font-body), ui-sans-serif, system-ui, sans-serif;
+  
+  --animate-fade-in: fade-in 0.5s ease-out;
+  --animate-slide-up: slide-up 0.5s ease-out;
+  --animate-zoom-in: zoom-in 0.5s ease-out;
+
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes slide-up {
+    from { transform: translateY(1rem); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+  @keyframes zoom-in {
+    from { transform: scale(0.98); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #020617;
+    --foreground: #f8fafc;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  letter-spacing: -0.025em;
+}
+
+/* Custom TCM Design Primitives - SaaS style */
+@layer components {
+  .tcm-card {
+    @apply bg-white border border-slate-200 shadow-sm transition-all duration-300 rounded-xl;
+  }
+  
+  .tcm-card-hover {
+    @apply hover:shadow-lg hover:border-tcm-accent/30 hover:-translate-y-0.5;
+  }
+  
+  .tcm-input {
+    @apply w-full p-4 bg-slate-50 border border-slate-200 rounded-xl focus:border-tcm-accent focus:bg-white focus:ring-4 focus:ring-tcm-accent/10 outline-none transition-all font-body text-base;
+  }
+  
+  .tcm-btn-primary {
+    @apply px-5 py-2.5 bg-tcm-emerald text-white font-heading font-bold tracking-tight rounded-xl hover:bg-tcm-emerald/90 transition-all duration-300 shadow-md shadow-tcm-emerald/20 active:scale-[0.98] disabled:opacity-50 text-sm;
+  }
+  
+  .tcm-btn-outline {
+    @apply px-5 py-2.5 border border-slate-200 text-slate-500 font-heading font-bold rounded-xl hover:border-tcm-accent hover:text-tcm-accent hover:bg-tcm-accent/5 transition-all duration-300 active:scale-[0.98] text-sm;
+  }
+
+  .tcm-sidebar-item {
+    @apply flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 text-slate-500 font-medium hover:bg-slate-100 hover:text-slate-900;
+  }
+  
+  .tcm-sidebar-item-active {
+    @apply bg-tcm-accent/10 text-tcm-accent font-semibold;
+  }
+
+  .tcm-badge {
+    @apply px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border border-cyan-100 bg-cyan-50/50 text-cyan-700;
+  }
+
+  .tcm-label {
+    @apply text-sm font-heading font-semibold text-slate-500 mb-2 block;
+  }
+}
+
+/* Custom Scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  @apply bg-slate-200 rounded-full hover:bg-slate-300 transition-colors;
+}
+
+
