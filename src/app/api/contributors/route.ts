@@ -7,7 +7,7 @@ export async function GET() {
       orderBy: { name: 'asc' }
     })
     return NextResponse.json(contributors)
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Failed to fetch contributors' }, { status: 500 })
   }
 }
@@ -22,7 +22,7 @@ export async function POST(req: Request) {
       }
     })
     return NextResponse.json(contributor)
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Failed to create contributor' }, { status: 500 })
   }
 }

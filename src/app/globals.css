@@ -8,6 +8,15 @@
   --tcm-gold: #0369a1; /* sky-700 - professional trust blue */
   --tcm-ink: #020617; 
 
+  /* Semantic UI Colors */
+  --card-bg: #ffffff;
+  --card-border: #e2e8f0; /* slate-200 */
+  --input-bg: #f8fafc; /* slate-50 */
+  --input-border: #e2e8f0; /* slate-200 */
+  --muted-text: #64748b; /* slate-500 */
+  --heading-text: #0f172a; /* slate-900 */
+  --surface: #ffffff;
+
   /* Global scale remappings to ensure all components use the new emerald/green theme */
   /* Map teal scale to emerald/green */
   --color-teal-50: #ecfdf5;
@@ -36,6 +45,14 @@
   --color-tcm-emerald: var(--tcm-emerald);
   --color-tcm-gold: var(--tcm-gold);
   --color-tcm-ink: var(--tcm-ink);
+
+  --color-card: var(--card-bg);
+  --color-card-border: var(--card-border);
+  --color-input: var(--input-bg);
+  --color-input-border: var(--input-border);
+  --color-muted: var(--muted-text);
+  --color-heading: var(--heading-text);
+  --color-surface: var(--surface);
   
   --font-heading: var(--font-heading), ui-sans-serif, system-ui, sans-serif;
   --font-body: var(--font-body), ui-sans-serif, system-ui, sans-serif;
@@ -58,11 +75,17 @@
   }
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #020617;
-    --foreground: #f8fafc;
-  }
+.dark {
+  --background: #020617;
+  --foreground: #f8fafc;
+  
+  --card-bg: #0f172a; /* slate-900 */
+  --card-border: #1e293b; /* slate-800 */
+  --input-bg: #1e293b; /* slate-800 */
+  --input-border: #334155; /* slate-700 */
+  --muted-text: #94a3b8; /* slate-400 */
+  --heading-text: #f8fafc; /* slate-50 */
+  --surface: #0f172a;
 }
 
 body {
@@ -81,7 +104,7 @@ h1, h2, h3, h4, h5, h6 {
 /* Custom TCM Design Primitives - SaaS style */
 @layer components {
   .tcm-card {
-    @apply bg-white border border-slate-200 shadow-sm transition-all duration-300 rounded-xl;
+    @apply bg-card border border-card-border shadow-sm transition-all duration-300 rounded-xl;
   }
   
   .tcm-card-hover {
@@ -89,7 +112,7 @@ h1, h2, h3, h4, h5, h6 {
   }
   
   .tcm-input {
-    @apply w-full p-4 bg-slate-50 border border-slate-200 rounded-xl focus:border-tcm-accent focus:bg-white focus:ring-4 focus:ring-tcm-accent/10 outline-none transition-all font-body text-base;
+    @apply w-full p-4 bg-input border border-input-border rounded-xl focus:border-tcm-accent focus:bg-surface focus:ring-4 focus:ring-tcm-accent/10 outline-none transition-all font-body text-base text-foreground;
   }
   
   .tcm-btn-primary {
@@ -97,11 +120,11 @@ h1, h2, h3, h4, h5, h6 {
   }
   
   .tcm-btn-outline {
-    @apply px-5 py-2.5 border border-slate-200 text-slate-500 font-heading font-bold rounded-xl hover:border-tcm-accent hover:text-tcm-accent hover:bg-tcm-accent/5 transition-all duration-300 active:scale-[0.98] text-sm;
+    @apply px-5 py-2.5 border border-card-border text-muted font-heading font-bold rounded-xl hover:border-tcm-accent hover:text-tcm-accent hover:bg-tcm-accent/5 transition-all duration-300 active:scale-[0.98] text-sm;
   }
 
   .tcm-sidebar-item {
-    @apply flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 text-slate-500 font-medium hover:bg-slate-100 hover:text-slate-900;
+    @apply flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 text-muted font-medium hover:bg-input hover:text-foreground;
   }
   
   .tcm-sidebar-item-active {
@@ -109,11 +132,11 @@ h1, h2, h3, h4, h5, h6 {
   }
 
   .tcm-badge {
-    @apply px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border border-cyan-100 bg-cyan-50/50 text-cyan-700;
+    @apply px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border border-teal-100/30 bg-teal-50/10 text-tcm-accent;
   }
 
   .tcm-label {
-    @apply text-sm font-heading font-semibold text-slate-500 mb-2 block;
+    @apply text-sm font-heading font-semibold text-muted mb-2 block;
   }
 }
 

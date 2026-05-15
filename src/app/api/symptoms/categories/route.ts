@@ -11,7 +11,7 @@ export async function POST(req: Request) {
       data: { name: body.name }
     })
     return NextResponse.json(category)
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Failed to create category' }, { status: 500 })
   }
 }

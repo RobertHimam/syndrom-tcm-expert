@@ -90,9 +90,11 @@ describe('diagnose()', () => {
   })
 
   it('returns a single syndrome with correct cfScore from one matching symptom', async () => {
-    mockFindMany.mockResolvedValue([
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const fakeRules: any[] = [
       { id: 'r1', syndromeId: 'syn-a', syndrome: syndromeA, symptomOptionId: 'opt-1', cfWeight: 0.8, createdAt: new Date(), updatedAt: new Date() },
-    ])
+    ]
+    mockFindMany.mockResolvedValue(fakeRules)
 
     const result = await diagnose(['opt-1'])
 
@@ -104,10 +106,12 @@ describe('diagnose()', () => {
   })
 
   it('combines multiple matching symptoms for the same syndrome using CF formula', async () => {
-    mockFindMany.mockResolvedValue([
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const fakeRules: any[] = [
       { id: 'r1', syndromeId: 'syn-a', syndrome: syndromeA, symptomOptionId: 'opt-1', cfWeight: 0.8, createdAt: new Date(), updatedAt: new Date() },
       { id: 'r2', syndromeId: 'syn-a', syndrome: syndromeA, symptomOptionId: 'opt-2', cfWeight: 0.6, createdAt: new Date(), updatedAt: new Date() },
-    ])
+    ]
+    mockFindMany.mockResolvedValue(fakeRules)
 
     const result = await diagnose(['opt-1', 'opt-2'])
 
@@ -118,10 +122,12 @@ describe('diagnose()', () => {
   })
 
   it('returns syndromes sorted by cfScore descending', async () => {
-    mockFindMany.mockResolvedValue([
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const fakeRules: any[] = [
       { id: 'r1', syndromeId: 'syn-b', syndrome: syndromeB, symptomOptionId: 'opt-1', cfWeight: 0.5, createdAt: new Date(), updatedAt: new Date() },
       { id: 'r2', syndromeId: 'syn-a', syndrome: syndromeA, symptomOptionId: 'opt-2', cfWeight: 0.9, createdAt: new Date(), updatedAt: new Date() },
-    ])
+    ]
+    mockFindMany.mockResolvedValue(fakeRules)
 
     const result = await diagnose(['opt-1', 'opt-2'])
 
@@ -131,10 +137,12 @@ describe('diagnose()', () => {
   })
 
   it('handles multiple syndromes independently', async () => {
-    mockFindMany.mockResolvedValue([
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const fakeRules: any[] = [
       { id: 'r1', syndromeId: 'syn-a', syndrome: syndromeA, symptomOptionId: 'opt-1', cfWeight: 0.8, createdAt: new Date(), updatedAt: new Date() },
       { id: 'r2', syndromeId: 'syn-b', syndrome: syndromeB, symptomOptionId: 'opt-2', cfWeight: 0.6, createdAt: new Date(), updatedAt: new Date() },
-    ])
+    ]
+    mockFindMany.mockResolvedValue(fakeRules)
 
     const result = await diagnose(['opt-1', 'opt-2'])
 

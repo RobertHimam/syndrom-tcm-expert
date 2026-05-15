@@ -15,7 +15,7 @@ export async function GET(req: Request) {
       }
     })
     return NextResponse.json(rules)
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Failed to fetch rules' }, { status: 500 })
   }
 }
@@ -41,7 +41,7 @@ export async function POST(req: Request) {
       }
     })
     return NextResponse.json(rule)
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Failed to save rule' }, { status: 500 })
   }
 }

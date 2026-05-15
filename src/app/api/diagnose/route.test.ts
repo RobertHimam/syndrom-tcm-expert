@@ -72,12 +72,13 @@ describe('POST /api/diagnose', () => {
         acupoints: 'HT7',
         cfScore: 0.8,
         confidence: 80,
-        confidenceLevel: 'Highly Likely',
+        confidenceLevel: 'Highly Likely' as const,
         createdAt: new Date(),
         updatedAt: new Date(),
       },
     ]
-    mockDiagnose.mockResolvedValue(fakeResults)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    mockDiagnose.mockResolvedValue(fakeResults as any)
     mockCreate.mockResolvedValue({} as never)
 
     const req = makeRequest({

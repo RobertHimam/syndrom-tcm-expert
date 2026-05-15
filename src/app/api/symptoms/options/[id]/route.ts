@@ -13,7 +13,7 @@ export async function PATCH(
       data: { name: body.name }
     })
     return NextResponse.json(option)
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Failed to update option' }, { status: 500 })
   }
 }
@@ -33,7 +33,7 @@ export async function DELETE(
       where: { id }
     })
     return NextResponse.json({ message: 'Option deleted' })
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Failed to delete option' }, { status: 500 })
   }
 }

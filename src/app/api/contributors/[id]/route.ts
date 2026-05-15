@@ -11,7 +11,7 @@ export async function DELETE(
       where: { id }
     })
     return NextResponse.json({ message: 'Contributor deleted' })
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Failed to delete contributor' }, { status: 500 })
   }
 }

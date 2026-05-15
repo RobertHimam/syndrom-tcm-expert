@@ -14,7 +14,7 @@ export async function GET(
       return NextResponse.json({ error: 'Complaint not found' }, { status: 404 })
     }
     return NextResponse.json(complaint)
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Failed to fetch complaint' }, { status: 500 })
   }
 }
@@ -34,7 +34,7 @@ export async function PUT(
       }
     })
     return NextResponse.json(complaint)
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Failed to update complaint' }, { status: 500 })
   }
 }
@@ -49,7 +49,7 @@ export async function DELETE(
       where: { id }
     })
     return NextResponse.json({ message: 'Complaint deleted' })
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Failed to delete complaint' }, { status: 500 })
   }
 }

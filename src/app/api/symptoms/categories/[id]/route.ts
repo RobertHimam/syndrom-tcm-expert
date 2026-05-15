@@ -13,7 +13,7 @@ export async function PATCH(
       data: { name: body.name }
     })
     return NextResponse.json(category)
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Failed to update category' }, { status: 500 })
   }
 }

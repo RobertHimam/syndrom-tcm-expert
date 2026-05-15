@@ -14,7 +14,7 @@ export async function POST(req: Request) {
       }
     })
     return NextResponse.json(option)
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Failed to create option' }, { status: 500 })
   }
 }

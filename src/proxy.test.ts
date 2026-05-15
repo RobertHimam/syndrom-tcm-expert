@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { middleware } from './middleware'
+import { proxy } from './proxy'
 import { NextRequest, NextResponse } from 'next/server'
 
 // Mock NextResponse
@@ -16,7 +16,7 @@ vi.mock('next/server', async (importOriginal) => {
   }
 })
 
-describe('Middleware', () => {
+describe('Proxy (Auth)', () => {
   const createMockRequest = (pathname: string, hasCookie = false): NextRequest => {
     return {
       nextUrl: {
@@ -31,43 +31,43 @@ describe('Middleware', () => {
 
   it('allows access to public routes', () => {
     const req = createMockRequest('/login')
-    middleware(req)
+    proxy(req)
     expect(NextResponse.next).toHaveBeenCalled()
   })
 
   it('redirects unauthenticated users to /admin/login from /admin', () => {
     const req = createMockRequest('/admin/dashboard')
-    middleware(req)
+    proxy(req)
     expect(NextResponse.redirect).toHaveBeenCalledWith(new URL('/admin/login', 'http://localhost:3000/admin/dashboard'))
   })
 
   it('allows authenticated users to access /admin', () => {
     const req = createMockRequest('/admin/dashboard', true)
-    middleware(req)
+    proxy(req)
     expect(NextResponse.next).toHaveBeenCalled()
   })
 
   it('allows unauthenticated users to access /admin/login', () => {
     const req = createMockRequest('/admin/login')
-    middleware(req)
+    proxy(req)
     expect(NextResponse.next).toHaveBeenCalled()
   })
 
   it('blocks unauthenticated users from /api/admin', () => {
     const req = createMockRequest('/api/admin/stats')
-    const response = middleware(req) as NextResponse
+    const response = proxy(req) as NextResponse
     expect(response.status).toBe(401)
   })
 
   it('blocks unauthenticated users from /api/rules', () => {
     const req = createMockRequest('/api/rules')
-    const response = middleware(req) as NextResponse
+    const response = proxy(req) as NextResponse
     expect(response.status).toBe(401)
   })
 
   it('allows authenticated users to access /api/admin', () => {
     const req = createMockRequest('/api/admin/stats', true)
-    middleware(req)
+    proxy(req)
     expect(NextResponse.next).toHaveBeenCalled()
   })
 })

@@ -18,7 +18,7 @@ export async function PUT(
       }
     })
     return NextResponse.json(syndrome)
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Failed to update syndrome' }, { status: 500 })
   }
 }
@@ -40,7 +40,7 @@ export async function DELETE(
       where: { id }
     })
     return NextResponse.json({ message: 'Syndrome deleted' })
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Failed to delete syndrome' }, { status: 500 })
   }
 }

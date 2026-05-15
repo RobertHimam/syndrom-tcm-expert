@@ -7,7 +7,7 @@ export async function GET() {
       orderBy: { name: 'asc' }
     })
     return NextResponse.json(complaints)
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Failed to fetch complaints' }, { status: 500 })
   }
 }
@@ -25,7 +25,7 @@ export async function POST(req: Request) {
       }
     })
     return NextResponse.json(complaint)
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Failed to create complaint' }, { status: 500 })
   }
 }
