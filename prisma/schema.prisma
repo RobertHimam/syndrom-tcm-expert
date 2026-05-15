@@ -11,13 +11,13 @@ datasource db {
 }
 
 model Complaint {
-  id            String         @id @default(uuid()) @db.Uuid
-  name          String         @unique
+  id            String              @id @default(uuid()) @db.Uuid
+  name          String              @unique
   description   String?
-  syndromes     Syndrome[]     @relation("ComplaintToSyndrome")
+  syndromes     SyndromeComplaint[]
   consultations Consultation[]
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
 
   @@map("complaints")
 }
@@ -47,16 +47,27 @@ model SymptomOption {
 }
 
 model Syndrome {
-  id               String         @id @default(uuid()) @db.Uuid
-  name             String         @unique
+  id               String              @id @default(uuid()) @db.Uuid
+  name             String              @unique
   therapyPrinciple String
   acupoints        String
-  complaints       Complaint[]    @relation("ComplaintToSyndrome")
+  complaints       SyndromeComplaint[]
   rules            SyndromeRule[]
-  createdAt        DateTime       @default(now())
-  updatedAt        DateTime       @updatedAt
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
 
   @@map("syndromes")
+}
+
+// Explicit join table for Complaint <-> Syndrome many-to-many
+model SyndromeComplaint {
+  syndromeId  String    @db.Uuid
+  complaintId String    @db.Uuid
+  syndrome    Syndrome  @relation(fields: [syndromeId], references: [id], onDelete: Cascade)
+  complaint   Complaint @relation(fields: [complaintId], references: [id], onDelete: Cascade)
+
+  @@id([syndromeId, complaintId])
+  @@map("syndrome_complaints")
 }
 
 model Contributor {

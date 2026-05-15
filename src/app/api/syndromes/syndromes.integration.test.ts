@@ -1,7 +1,32 @@
-import { describe, it, expect, beforeAll } from 'vitest'
-import { prisma } from '@/lib/prisma'
+import { describe, it, expect, beforeAll, vi } from 'vitest'
 import { POST } from './route'
 import { NextRequest } from 'next/server'
+import { Prisma } from '@/generated/prisma-client'
+import { prisma } from '@/lib/prisma'
+
+vi.mock('@/lib/prisma', () => {
+  let syndromes: any[] = []
+  return {
+    prisma: {
+      syndromeRule: { deleteMany: vi.fn() },
+      syndrome: {
+        deleteMany: vi.fn(() => { syndromes = [] }),
+        create: vi.fn(async (args: any) => {
+          if (syndromes.find(s => s.name === args.data.name)) {
+            throw new Prisma.PrismaClientKnownRequestError('Unique constraint failed', {
+              code: 'P2002',
+              clientVersion: '7.8.0',
+              meta: { target: ['name'] }
+            })
+          }
+          const newSyndrome = { id: 'test-id', ...args.data }
+          syndromes.push(newSyndrome)
+          return newSyndrome
+        })
+      }
+    }
+  }
+})
 
 describe('Syndrome API - Duplicate Name Validation (TDD)', () => {
   const TEST_SYNDROME_NAME = 'Duplicate Test Syndrome'

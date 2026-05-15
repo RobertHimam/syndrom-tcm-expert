@@ -16,13 +16,20 @@ export const diagnoseSchema = z.object({
 export const syndromeRuleSchema = z.object({
   syndromeId: z.string().uuid(),
   symptomOptionId: z.string().uuid(),
-  cfWeight: z.number().min(0).max(1),
+  cfWeight: z.number().min(-1).max(1),
 });
 
 export const syndromeSchema = z.object({
   name: z.string().min(2),
   therapyPrinciple: z.string().min(5),
   acupoints: z.string().min(2),
+  complaintIds: z.array(z.string().uuid()).optional(),
+});
+
+export const complaintSchema = z.object({
+  name: z.string().min(2),
+  description: z.string().optional().nullable(),
+  syndromeIds: z.array(z.string().uuid()).optional(),
 });
 
 export const loginSchema = z.object({

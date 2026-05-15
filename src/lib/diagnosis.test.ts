@@ -27,6 +27,35 @@ describe('calculateCombinedCF', () => {
     expect(calculateCombinedCF([0.8, 0.6])).toBeCloseTo(0.92)
   })
 
+  it('should correctly combine two negative weights', () => {
+    // CF1 < 0, CF2 < 0: CF1 + CF2 * (1 + CF1)
+    // -0.8 + (-0.6) * (1 + (-0.8)) = -0.8 - 0.6 * 0.2 = -0.8 - 0.12 = -0.92
+    expect(calculateCombinedCF([-0.8, -0.6])).toBeCloseTo(-0.92)
+  })
+
+  it('should correctly combine mixed signs (positive and negative)', () => {
+    // CF1 * CF2 < 0: (CF1 + CF2) / (1 - min(|CF1|, |CF2|))
+    // (0.8 + (-0.6)) / (1 - 0.6) = 0.2 / 0.4 = 0.5
+    expect(calculateCombinedCF([0.8, -0.6])).toBeCloseTo(0.5)
+
+    // (-0.8 + 0.6) / (1 - 0.6) = -0.2 / 0.4 = -0.5
+    expect(calculateCombinedCF([-0.8, 0.6])).toBeCloseTo(-0.5)
+  })
+
+  it('should correctly combine weights when one is 1 and another is -1', () => {
+    // Special case: contradictory absolute certainty
+    // Formula (1 + -1) / (1 - 1) is undefined, but practically it should handle it.
+    // However, the standard formula handles it as 1.0 (if we process sequentially)
+    // Actually, in some systems this is an error, but let's see how we handle it.
+    expect(calculateCombinedCF([1.0, -1.0])).toBe(0) 
+  })
+
+  it('should correctly combine three mixed weights', () => {
+    // (0.8, 0.6) -> 0.92
+    // (0.92, -0.5) -> (0.92 - 0.5) / (1 - 0.5) = 0.42 / 0.5 = 0.84
+    expect(calculateCombinedCF([0.8, 0.6, -0.5])).toBeCloseTo(0.84)
+  })
+
   it('should correctly combine three weights', () => {
     // (0.8, 0.6) -> 0.92
     // (0.92, 0.4) -> 0.92 + 0.4 * (1 - 0.92) = 0.92 + 0.4 * 0.08 = 0.92 + 0.032 = 0.952
@@ -151,6 +180,25 @@ describe('diagnose()', () => {
     const b = result.find((r) => r.syndromeId === 'syn-b')
     expect(a?.cfScore).toBeCloseTo(0.8)
     expect(b?.cfScore).toBeCloseTo(0.6)
+  })
+
+  it('correctly handles a syndrome with both supporting and conflicting symptoms', async () => {
+    // Syndrome A: Symptom 1 (0.8 support), Symptom 3 (-0.5 conflict)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const fakeRules: any[] = [
+      { id: 'r1', syndromeId: 'syn-a', syndrome: syndromeA, symptomOptionId: 'opt-1', cfWeight: 0.8, createdAt: new Date(), updatedAt: new Date() },
+      { id: 'r3', syndromeId: 'syn-a', syndrome: syndromeA, symptomOptionId: 'opt-3', cfWeight: -0.5, createdAt: new Date(), updatedAt: new Date() },
+    ]
+    mockFindMany.mockResolvedValue(fakeRules)
+
+    const result = await diagnose(['opt-1', 'opt-3'])
+
+    expect(result).toHaveLength(1)
+    expect(result[0].syndromeId).toBe('syn-a')
+    // (0.8 - 0.5) / (1 - 0.5) = 0.3 / 0.5 = 0.6
+    expect(result[0].cfScore).toBeCloseTo(0.6)
+    expect(result[0].confidence).toBe(60)
+    expect(result[0].confidenceLevel).toBe('Likely')
   })
 
   it('queries only rules matching the provided symptom option ids', async () => {

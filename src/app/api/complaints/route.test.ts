@@ -103,4 +103,35 @@ describe('POST /api/complaints', () => {
     const res = await POST(req)
     expect(res.status).toBe(500)
   })
+
+  it('creates a complaint with syndrome associations', async () => {
+    const syndromeIds = ['f47ac10b-58cc-4372-a567-0e02b2c3d479', '550e8400-e29b-41d4-a716-446655440000']
+    const body = { name: 'Insomnia', syndromeIds }
+    const mockComplaint = { id: 'c-1', name: 'Insomnia', syndromes: syndromeIds.map(id => ({ syndrome: { id, name: 'S-' + id } })) }
+    
+    mockCreate.mockResolvedValue(mockComplaint as any)
+
+    const request = new Request('http://localhost/api/complaints', {
+      method: 'POST',
+      body: JSON.stringify(body)
+    })
+
+    const response = await POST(request)
+    const data = await response.json()
+
+    expect(response.status).toBe(200)
+    expect(data.syndromes).toHaveLength(2)
+    expect(mockCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          syndromes: {
+            create: [
+              { syndromeId: 'f47ac10b-58cc-4372-a567-0e02b2c3d479' },
+              { syndromeId: '550e8400-e29b-41d4-a716-446655440000' }
+            ]
+          }
+        })
+      })
+    )
+  })
 })

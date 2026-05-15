@@ -1,5 +1,7 @@
 import { prisma } from '@/lib/prisma'
 import { NextResponse } from 'next/server'
+import { syndromeSchema } from '@/lib/validations'
+import { Prisma } from '@/generated/prisma-client'
 
 export async function PUT(
   req: Request,
@@ -9,16 +11,44 @@ export async function PUT(
     const { id } = await params
     const body = await req.json()
     
+    // Validate Input
+    const validatedData = syndromeSchema.safeParse(body)
+    if (!validatedData.success) {
+      return NextResponse.json({ error: validatedData.error.flatten() }, { status: 400 })
+    }
+
+    const { name, therapyPrinciple, acupoints, complaintIds } = validatedData.data
+    
     const syndrome = await prisma.syndrome.update({
       where: { id },
       data: {
-        name: body.name,
-        therapyPrinciple: body.therapyPrinciple,
-        acupoints: body.acupoints
+        name,
+        therapyPrinciple,
+        acupoints,
+        complaints: complaintIds ? {
+          deleteMany: {},
+          create: complaintIds.map((complaintId: string) => ({
+            complaintId
+          }))
+        } : undefined
+      },
+      include: {
+        complaints: {
+          include: { complaint: true }
+        }
       }
     })
     return NextResponse.json(syndrome)
-  } catch {
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === 'P2002') {
+        return NextResponse.json(
+          { error: `Syndrome with name "${(error.meta?.target as string[])?.[0] || "this name"}" already exists.` },
+          { status: 400 }
+        )
+      }
+    }
+    console.error('Syndrome update error:', error)
     return NextResponse.json({ error: 'Failed to update syndrome' }, { status: 500 })
   }
 }

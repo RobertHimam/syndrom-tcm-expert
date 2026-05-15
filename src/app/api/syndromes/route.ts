@@ -6,6 +6,13 @@ import { Prisma } from '@/generated/prisma-client';
 export async function GET() {
   try {
     const syndromes = await prisma.syndrome.findMany({
+      include: {
+        complaints: {
+          include: {
+            complaint: true
+          }
+        }
+      },
       orderBy: { name: "asc" },
     });
     return NextResponse.json(syndromes);

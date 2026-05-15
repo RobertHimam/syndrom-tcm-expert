@@ -24,7 +24,7 @@ export async function GET(req: Request) {
 
     if (complaintId) {
       const syndromes = await prisma.syndrome.findMany({
-        where: { complaints: { some: { id: complaintId } } },
+        where: { complaints: { some: { complaintId } } },
         select: { id: true },
       });
 

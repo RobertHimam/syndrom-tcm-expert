@@ -1,5 +1,9 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { calculateCombinedCF } from './diagnosis'
+
+vi.mock('./prisma', () => ({
+  prisma: {},
+}))
 
 describe('CF Algorithm - Floating Point Commutativity', () => {
   it('is commutative with arbitrary floating point weights', () => {

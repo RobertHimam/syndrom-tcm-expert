@@ -191,7 +191,11 @@ async function main() {
         name: s.name,
         therapyPrinciple: s.therapyPrinciple,
         acupoints: s.acupoints,
-        complaints: { connect: { id: insomniaComplaint.id } },
+        complaints: {
+          create: {
+            complaintId: insomniaComplaint.id
+          }
+        },
       } satisfies Prisma.SyndromeCreateInput,
     });
 

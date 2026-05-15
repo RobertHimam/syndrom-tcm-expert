@@ -102,12 +102,12 @@ describe('syndromeRuleSchema', () => {
     ).toBe(true)
   })
 
-  it('rejects cfWeight below 0', () => {
+  it('rejects cfWeight below -1', () => {
     expect(
       syndromeRuleSchema.safeParse({
         syndromeId: VALID_UUID,
         symptomOptionId: VALID_UUID,
-        cfWeight: -0.1,
+        cfWeight: -1.1,
       }).success
     ).toBe(false)
   })

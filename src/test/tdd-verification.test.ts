@@ -1,6 +1,22 @@
-import { prisma } from '../lib/prisma'
+import { describe, it, expect, beforeAll, vi } from 'vitest'
 import { diagnose } from '../lib/diagnosis'
-import { describe, it, expect, beforeAll } from 'vitest'
+import { prisma } from '../lib/prisma'
+
+vi.mock('../lib/prisma', () => ({
+  prisma: {
+    consultationSymptom: { deleteMany: vi.fn() },
+    consultation: { deleteMany: vi.fn(), create: vi.fn().mockImplementation(async (args) => ({ id: 'c1', complaintId: args.data.complaintId, selectedSymptoms: [{}, {}] })) },
+    syndromeRule: { deleteMany: vi.fn(), createMany: vi.fn() },
+    symptomOption: { deleteMany: vi.fn(), create: vi.fn().mockResolvedValue({ id: '550e8400-e29b-41d4-a716-446655440001' }) },
+    symptomCategory: { deleteMany: vi.fn(), create: vi.fn().mockResolvedValue({ id: 'cat1' }) },
+    complaint: { deleteMany: vi.fn(), create: vi.fn().mockResolvedValue({ id: '550e8400-e29b-41d4-a716-446655440000' }) },
+    syndrome: { deleteMany: vi.fn(), create: vi.fn().mockResolvedValue({ id: '550e8400-e29b-41d4-a716-446655440002' }) },
+  }
+}))
+
+vi.mock('../lib/diagnosis', () => ({
+  diagnose: vi.fn().mockResolvedValue([{ syndromeId: '550e8400-e29b-41d4-a716-446655440002', cfScore: 0.9 }])
+}))
 
 describe('TCM Expert System TDD - UUID & Insomnia Logic', () => {
   let complaintId: string

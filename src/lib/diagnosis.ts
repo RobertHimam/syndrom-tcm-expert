@@ -3,13 +3,30 @@ import { Syndrome } from '@/generated/prisma-client';
 
 /**
  * Certainty Factor (CF) Calculation Utility
- * CF_combine = CF1 + CF2 * (1 - CF1)
+ * Standard CF combination formula:
+ * 1. CF1 > 0, CF2 > 0: CF = CF1 + CF2 * (1 - CF1)
+ * 2. CF1 < 0, CF2 < 0: CF = CF1 + CF2 * (1 + CF1)
+ * 3. CF1 * CF2 < 0: CF = (CF1 + CF2) / (1 - min(|CF1|, |CF2|))
  */
 export function calculateCombinedCF(weights: number[]): number {
   if (weights.length === 0) return 0;
 
   return weights.reduce((cf1, cf2) => {
-    return cf1 + cf2 * (1 - cf1);
+    // Handle absolute contradiction
+    if ((cf1 === 1 && cf2 === -1) || (cf1 === -1 && cf2 === 1)) return 0;
+    
+    // Handle absolute certainty
+    if (cf1 === 1 || cf2 === 1) return 1;
+    if (cf1 === -1 || cf2 === -1) return -1;
+
+    if (cf1 >= 0 && cf2 >= 0) {
+      return cf1 + cf2 * (1 - cf1);
+    } else if (cf1 < 0 && cf2 < 0) {
+      return cf1 + cf2 * (1 + cf1);
+    } else {
+      // Mixed signs
+      return (cf1 + cf2) / (1 - Math.min(Math.abs(cf1), Math.abs(cf2)));
+    }
   });
 }
 
@@ -29,12 +46,21 @@ export function mapConfidenceToLevel(confidence: number): ConfidenceLevel {
 /**
  * Performs TCM Syndrome diagnosis based on selected symptom options.
  * Calculates CF scores for all matching syndromes.
+ * 
+ * Production Note: Optional complaintId filtering ensures we only consider 
+ * syndromes relevant to the patient's primary complaint.
  */
-export async function diagnose(symptomOptionIds: string[]) {
+export async function diagnose(symptomOptionIds: string[], complaintId?: string) {
   // 1. Fetch all rules matching the selected symptoms
   const rules = await prisma.syndromeRule.findMany({
     where: {
       symptomOptionId: { in: symptomOptionIds },
+      // Filter by complaint if provided
+      syndrome: complaintId ? {
+        complaints: {
+          some: { complaintId }
+        }
+      } : undefined
     },
     include: {
       syndrome: true,

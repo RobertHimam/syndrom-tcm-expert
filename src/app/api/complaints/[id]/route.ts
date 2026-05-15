@@ -1,5 +1,7 @@
 import { prisma } from '@/lib/prisma'
 import { NextResponse } from 'next/server'
+import { complaintSchema } from '@/lib/validations'
+import { Prisma } from '@/generated/prisma-client'
 
 export async function GET(
   req: Request,
@@ -8,7 +10,12 @@ export async function GET(
   try {
     const { id } = await params
     const complaint = await prisma.complaint.findUnique({
-      where: { id }
+      where: { id },
+      include: {
+        syndromes: {
+          include: { syndrome: true }
+        }
+      }
     })
     if (!complaint) {
       return NextResponse.json({ error: 'Complaint not found' }, { status: 404 })
@@ -26,15 +33,45 @@ export async function PUT(
   try {
     const { id } = await params
     const body = await req.json()
+    
+    // Validate Input
+    const validatedData = complaintSchema.safeParse(body)
+    if (!validatedData.success) {
+      return NextResponse.json({ error: validatedData.error.flatten() }, { status: 400 })
+    }
+
+    const { name, description, syndromeIds } = validatedData.data
+
+    // Update complaint and its associations
     const complaint = await prisma.complaint.update({
       where: { id },
       data: {
-        name: body.name,
-        description: body.description
+        name,
+        description,
+        syndromes: syndromeIds ? {
+          deleteMany: {},
+          create: syndromeIds.map((syndromeId: string) => ({
+            syndromeId
+          }))
+        } : undefined
+      },
+      include: {
+        syndromes: {
+          include: { syndrome: true }
+        }
       }
     })
     return NextResponse.json(complaint)
-  } catch {
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === 'P2002') {
+        return NextResponse.json(
+          { error: `Complaint with name "${(error.meta?.target as string[])?.[0] || "this name"}" already exists.` },
+          { status: 400 }
+        )
+      }
+    }
+    console.error('Complaint update error:', error)
     return NextResponse.json({ error: 'Failed to update complaint' }, { status: 500 })
   }
 }

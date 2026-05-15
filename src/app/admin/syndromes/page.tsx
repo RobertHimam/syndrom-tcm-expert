@@ -3,7 +3,13 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Plus, ListTree, Zap, ChevronRight, Search, Info, Settings2, Trash2, X, Activity } from 'lucide-react'
-import { Syndrome, SyndromeRule, SymptomOption, SymptomCategory } from '@/generated/prisma-client'
+import { Syndrome, SyndromeRule, SymptomOption, SymptomCategory, Complaint } from '@/generated/prisma-client'
+
+type SyndromeWithDetails = Syndrome & {
+  complaints: {
+    complaint: Complaint
+  }[]
+}
 
 type SyndromeRuleWithDetails = SyndromeRule & {
   symptomOption: SymptomOption & {
@@ -17,49 +23,89 @@ type SymptomCategoryWithOptions = SymptomCategory & {
 
 export default function SyndromesAdmin() {
   const queryClient = useQueryClient()
-  const [selectedSyndrome, setSelectedSyndrome] = useState<Syndrome | null>(null)
+  const [selectedSyndrome, setSelectedSyndrome] = useState<SyndromeWithDetails | null>(null)
   const [isEditingRules, setIsEditingRules] = useState(false)
   const [isEditingDetails, setIsEditingDetails] = useState(false)
   const [isAdding, setIsAdding] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
-  const [formData, setFormData] = useState({ name: '', therapyPrinciple: '', acupoints: '' })
+  const [formData, setFormData] = useState({ name: '', therapyPrinciple: '', acupoints: '', complaintIds: [] as string[] })
 
   // Fetch Syndromes
-  const { data: syndromes = [], isLoading: isLoadingSyndromes } = useQuery<Syndrome[]>({
+  const { data: syndromes = [], isLoading: isLoadingSyndromes } = useQuery<SyndromeWithDetails[]>({
     queryKey: ['syndromes'],
-    queryFn: () => fetch('/api/syndromes').then(res => res.json())
+    queryFn: async () => {
+      const res = await fetch('/api/syndromes')
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Failed to fetch syndromes')
+      return data
+    }
+  })
+
+  // Fetch All Complaints for selection
+  const { data: complaints = [] } = useQuery<Complaint[]>({
+    queryKey: ['complaints-all'],
+    queryFn: async () => {
+      const res = await fetch('/api/complaints')
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Failed to fetch complaints')
+      return data
+    }
   })
 
   // Mutation to create syndrome
   const createMutation = useMutation({
-    mutationFn: (newSyndrome: Omit<Syndrome, 'id' | 'createdAt' | 'updatedAt'>) => 
+    mutationFn: (newSyndrome: { name: string, therapyPrinciple: string, acupoints: string, complaintIds: string[] }) => 
       fetch('/api/syndromes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newSyndrome)
       }).then(res => res.json()),
-    onSuccess: (data: Syndrome) => {
+    onSuccess: (data: SyndromeWithDetails) => {
       queryClient.invalidateQueries({ queryKey: ['syndromes'] })
       setIsAdding(false)
       setSelectedSyndrome(data)
-      setFormData({ name: '', therapyPrinciple: '', acupoints: '' })
+      setFormData({ name: '', therapyPrinciple: '', acupoints: '', complaintIds: [] })
     }
   })
 
   // Mutation to update syndrome
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string, data: Partial<Syndrome> }) => 
+    mutationFn: ({ id, data }: { id: string, data: Partial<Syndrome> & { complaintIds?: string[] } }) => 
       fetch(`/api/syndromes/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
       }).then(res => res.json()),
-    onSuccess: (data: Syndrome) => {
+    onSuccess: (data: SyndromeWithDetails) => {
       queryClient.invalidateQueries({ queryKey: ['syndromes'] })
       setIsEditingDetails(false)
       setSelectedSyndrome(data)
     }
   })
+
+  const toggleComplaint = (id: string) => {
+    if (isAdding) {
+      setFormData(prev => ({
+        ...prev,
+        complaintIds: prev.complaintIds.includes(id) 
+          ? prev.complaintIds.filter(cid => cid !== id)
+          : [...prev.complaintIds, id]
+      }))
+    } else if (selectedSyndrome) {
+      const currentIds = selectedSyndrome.complaints.map(c => c.complaint.id)
+      const newIds = currentIds.includes(id)
+        ? currentIds.filter(cid => cid !== id)
+        : [...currentIds, id]
+      
+      setSelectedSyndrome({
+        ...selectedSyndrome,
+        complaints: newIds.map(cid => ({ 
+          complaint: complaints.find(c => c.id === cid) 
+        })),
+        complaintIds: newIds
+      } as any)
+    }
+  }
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => 
@@ -100,18 +146,20 @@ export default function SyndromesAdmin() {
     return rule ? rule.cfWeight : 0
   }
 
-  const handleEditDetails = (s: Syndrome) => {
+  const handleEditDetails = (s: SyndromeWithDetails) => {
     setFormData({
       name: s.name,
       therapyPrinciple: s.therapyPrinciple,
-      acupoints: s.acupoints
+      acupoints: s.acupoints,
+      complaintIds: s.complaints.map(c => c.complaint.id)
     })
     setIsEditingDetails(true)
     setIsAdding(false)
     setIsEditingRules(false)
   }
 
-  const filteredSyndromes = syndromes.filter((s: Syndrome) => 
+  const safeSyndromes = Array.isArray(syndromes) ? syndromes : [];
+  const filteredSyndromes = safeSyndromes.filter((s: SyndromeWithDetails) => 
     s.name.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
@@ -146,7 +194,7 @@ export default function SyndromesAdmin() {
                 setIsAdding(true)
                 setSelectedSyndrome(null)
                 setIsEditingDetails(false)
-                setFormData({ name: '', therapyPrinciple: '', acupoints: '' })
+                setFormData({ name: '', therapyPrinciple: '', acupoints: '', complaintIds: [] })
               }}
               className="tcm-btn-primary flex items-center justify-center gap-2 whitespace-nowrap shrink-0 px-4"
             >
@@ -171,7 +219,7 @@ export default function SyndromesAdmin() {
                   </div>
                 ))
               ) : filteredSyndromes.length > 0 ? (
-                filteredSyndromes.map((s: Syndrome) => (
+                filteredSyndromes.map((s: SyndromeWithDetails) => (
                   <button
                     key={s.id}
                     onClick={() => {
@@ -221,12 +269,22 @@ export default function SyndromesAdmin() {
                   onClick={() => {
                     setIsAdding(false)
                     setIsEditingDetails(false)
+                    createMutation.reset()
+                    updateMutation.reset()
                   }}
                   className="p-2 text-slate-400 hover:text-slate-500 transition-colors"
                 >
                   <X size={24} />
                 </button>
               </div>
+
+              {/* Error Feedback */}
+              {(createMutation.isError || updateMutation.isError) && (
+                <div className="mx-6 md:mx-8 lg:mx-10 mt-6 mb-2 p-4 bg-red-50 text-red-600 rounded-xl border border-red-100 text-sm font-bold animate-fade-in">
+                  {(createMutation.error as Error)?.message || (updateMutation.error as Error)?.message}
+                </div>
+              )}
+
               <div className="p-6 md:p-8 lg:p-10 space-y-6 md:space-y-8">
                 <div className="space-y-2">
                   <label className="tcm-label">Pattern Name</label>
@@ -258,6 +316,35 @@ export default function SyndromesAdmin() {
                     onChange={(e) => setFormData({...formData, acupoints: e.target.value})}
                     className="tcm-input resize-none"
                   />
+                </div>
+                
+                <div className="space-y-4">
+                  <label className="tcm-label flex items-center gap-2">
+                    <Activity size={14} className="text-tcm-accent" /> Associated Complaints
+                  </label>
+                  <div className="bg-slate-50 rounded-xl border border-slate-200 p-4 max-h-[200px] overflow-y-auto custom-scrollbar">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {complaints.map((c: Complaint) => {
+                        const isSelected = isAdding 
+                          ? formData.complaintIds.includes(c.id)
+                          : selectedSyndrome?.complaints.some(rc => rc.complaint.id === c.id) || (selectedSyndrome as any)?.complaintIds?.includes(c.id);
+                        
+                        return (
+                          <button
+                            key={c.id}
+                            onClick={() => toggleComplaint(c.id)}
+                            className={`text-left px-4 py-2 rounded-lg text-sm font-heading font-bold transition-all border ${
+                              isSelected 
+                                ? 'bg-tcm-accent border-tcm-accent text-white' 
+                                : 'bg-white border-slate-100 text-teal-800 hover:border-tcm-accent/30'
+                            }`}
+                          >
+                            {c.name}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
                 </div>
                 <div className="flex flex-col sm:flex-row gap-3 md:gap-4 pt-4">
                   <button 
@@ -358,6 +445,13 @@ export default function SyndromesAdmin() {
                         <p className="text-base md:text-lg font-body italic leading-relaxed opacity-90 relative z-10">
                           This pattern represents a core clinical observation requiring: {selectedSyndrome.therapyPrinciple}.
                         </p>
+                        <div className="mt-6 flex flex-wrap gap-2 relative z-10">
+                          {selectedSyndrome.complaints?.map(c => (
+                            <span key={c.complaint.id} className="px-2 py-1 bg-teal-800/50 border border-teal-700 rounded-lg text-[10px] font-bold text-tcm-accent uppercase tracking-wider">
+                              {c.complaint.name}
+                            </span>
+                          ))}
+                        </div>
                       </div>
                     </div>
 
@@ -366,14 +460,16 @@ export default function SyndromesAdmin() {
                         <Settings2 size={14} className="text-tcm-accent" /> Active Matrix Weights
                       </h3>
                       <div className="space-y-3 max-h-[450px] overflow-y-auto pr-2 custom-scrollbar">
-                        {currentRules.filter((r: SyndromeRuleWithDetails) => r.cfWeight > 0).length > 0 ? (
-                          currentRules.filter((r: SyndromeRuleWithDetails) => r.cfWeight > 0).map((r: SyndromeRuleWithDetails) => (
+                        {currentRules.filter((r: SyndromeRuleWithDetails) => r.cfWeight !== 0).length > 0 ? (
+                          currentRules.filter((r: SyndromeRuleWithDetails) => r.cfWeight !== 0).map((r: SyndromeRuleWithDetails) => (
                             <div key={r.id} className="flex justify-between items-center p-4 bg-white border border-slate-100 rounded-xl hover:border-tcm-accent/20 transition-all shadow-sm group">
                               <div className="min-w-0 pr-4">
                                 <p className="text-[10px] font-heading font-black text-slate-400 uppercase tracking-widest">{r.symptomOption.category.name}</p>
                                 <p className="text-base md:text-lg font-heading font-bold text-teal-700 truncate group-hover:text-foreground transition-colors">{r.symptomOption.name}</p>
                               </div>
-                              <span className="flex-shrink-0 w-10 h-10 md:w-12 md:h-12 bg-background rounded-lg text-tcm-accent font-heading font-black text-lg md:text-xl flex items-center justify-center border border-slate-100 shadow-inner group-hover:bg-cyan-50 transition-colors">
+                              <span className={`flex-shrink-0 w-10 h-10 md:w-12 md:h-12 rounded-lg font-heading font-black text-lg md:text-xl flex items-center justify-center border border-slate-100 shadow-inner group-hover:bg-cyan-50 transition-colors ${
+                                r.cfWeight > 0 ? 'text-tcm-accent bg-background' : 'text-orange-500 bg-orange-50/50'
+                              }`}>
                                 {r.cfWeight.toFixed(1)}
                               </span>
                             </div>
@@ -396,7 +492,7 @@ export default function SyndromesAdmin() {
                       <div className="relative z-10">
                         <p className="font-heading font-bold text-lg md:text-xl tracking-wide uppercase text-tcm-accent">Weight Calibration Matrix</p>
                         <p className="text-slate-400 font-body text-sm md:text-base italic mt-1 leading-relaxed">
-                          Calibrate the Certainty Factor (0.0 to 1.0) for each clinical observation. Precision is paramount.
+                          Calibrate the Certainty Factor (-1.0 to 1.0) for each clinical observation. Positive values support the pattern, negative values detract from it.
                         </p>
                       </div>
                     </div>
@@ -416,7 +512,7 @@ export default function SyndromesAdmin() {
                                   <input 
                                     type="number"
                                     step="0.1"
-                                    min="0"
+                                    min="-1"
                                     max="1"
                                     defaultValue={getRuleWeight(opt.id)}
                                     onBlur={(e) => {

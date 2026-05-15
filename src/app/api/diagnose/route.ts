@@ -16,7 +16,7 @@ export async function POST(req: Request) {
     const { symptomOptionIds, patientData, complaintId } = validatedData.data
 
     // 2. Perform Diagnosis using verified utility
-    const diagnosisResults = await diagnose(symptomOptionIds)
+    const diagnosisResults = await diagnose(symptomOptionIds, complaintId)
 
     // 3. Save consultation
     await prisma.consultation.create({

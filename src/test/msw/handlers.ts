@@ -3,15 +3,15 @@ import { http, HttpResponse } from 'msw'
 export const handlers = [
   http.get('/api/complaints', () => {
     return HttpResponse.json([
-      { id: '1', name: 'Headache', description: 'Pain in head' },
-      { id: '2', name: 'Nausea', description: 'Feeling sick' }
+      { id: '1', name: 'Headache', description: 'Pain in head', syndromes: [] },
+      { id: '2', name: 'Nausea', description: 'Feeling sick', syndromes: [] }
     ])
   }),
 
   http.get('/api/syndromes', () => {
     return HttpResponse.json([
-      { id: '1', name: 'Liver Qi Stagnation', therapyPrinciple: 'Soothe Liver', acupoints: 'LV3, LI4' },
-      { id: '2', name: 'Spleen Deficiency', therapyPrinciple: 'Tonify Spleen', acupoints: 'ST36, SP6' }
+      { id: '1', name: 'Liver Qi Stagnation', therapyPrinciple: 'Soothe Liver', acupoints: 'LV3, LI4', complaints: [] },
+      { id: '2', name: 'Spleen Deficiency', therapyPrinciple: 'Tonify Spleen', acupoints: 'ST36, SP6', complaints: [] }
     ])
   }),
 
